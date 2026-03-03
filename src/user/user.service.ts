@@ -8,14 +8,18 @@ export class UserService {
   constructor(
     @InjectRepository(User) private userRepositery: Repository<User>,
   ) {}
-  findByEmail(tenantId: number, email: string) {
-    const result = this.userRepositery.query(
-      'select * from User where tenatId = ? and email = ? limit(1)',
-      [tenantId, email],
-    );
+  findByEmail(tenantId: number, email: string): Promise<User | null> {
+    const result = this.userRepositery.findOne({
+      where: { tenant_id: tenantId, email },
+    });
     return result;
   }
   createUser(data: Partial<User>) {
     return this.userRepositery.save(this.userRepositery.create(data));
+  }
+  findbyid(id: number) {
+    return this.userRepositery.query('select * from users where user_id = ?', [
+      id,
+    ]);
   }
 }

@@ -1,9 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Headers,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
-@Controller('auth')
+@Controller('v1/auth')
 export class AuthController {
   auth: any;
   constructor(private readonly authService: AuthService) {}
@@ -16,11 +23,31 @@ export class AuthController {
 
   @Post('register')
   register(
-    header: Record<string, string | string[] | undefined>,
+    @Headers() header: Record<string, string | string[] | undefined>,
     @Body() dto: RegisterDto,
   ) {
     const tenantId = this.gettenantid(header);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return this.auth.register(tenantId, dto);
+    return this.authService.register(
+      tenantId,
+      dto.email,
+      dto.password,
+      dto.username,
+    );
+  }
+  @Post('login')
+  login(
+    @Headers() header: Record<string, string | string[] | undefined>,
+    @Body() dto: LoginDto,
+  ) {
+    const tenantId = this.gettenantid(header);
+    return this.authService.login(tenantId, dto.email, dto.password);
+  }
+  @Post('refresh')
+  refresh(@Body() body: { refreshToken: string }) {
+    if (!body.refreshToken) {
+      throw new BadRequestException('refreshToken is required');
+    }
+
+    return this.authService.refreshToken(body.refreshToken);
   }
 }
