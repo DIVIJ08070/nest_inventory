@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Tenant } from 'src/auth/tenant.entity';
-
+export type UserRole = 'admin' | 'vendor' | 'customer';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
@@ -14,6 +14,13 @@ export class User {
 
   @Column()
   tenant_id: number;
+
+  @Column({
+    type: 'enum',
+    enum: ['admin', 'vendor', 'customer'],
+    default: 'customer',
+  })
+  role: UserRole;
 
   @ManyToOne(() => Tenant, (t) => t.users, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenant_id' })

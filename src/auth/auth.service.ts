@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
   Injectable,
@@ -11,7 +12,12 @@ import { IsNull, Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
 import { RefreshToken } from './refresh-token.entity';
 
-type DbUser = { user_id: number; tenant_id: number; password_hash?: string };
+type DbUser = {
+  user_id: number;
+  tenant_id: number;
+  role: string;
+  password_hash?: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -22,14 +28,18 @@ export class AuthService {
     private readonly refreshTokenRepository: Repository<RefreshToken>,
   ) {}
 
-  private signAccess(user: { user_id: number; tenant_id: number }): string {
+  private signAccess(user: {
+    user_id: number;
+    tenant_id: number;
+    role: string;
+  }): string {
     const secret = process.env.jwt_access_secret;
     if (!secret) throw new Error('missing jwt_access_secret');
 
     const expiresIn = (process.env.jwt_access_expires ?? '15m') as StringValue;
 
     return this.jwt.sign(
-      { sub: user.user_id, tenantId: user.tenant_id },
+      { sub: user.user_id, tenantId: user.tenant_id, role: user.role },
       { secret, expiresIn },
     );
   }
@@ -79,6 +89,7 @@ export class AuthService {
       tenant_id,
       username,
       email,
+      role: 'customer',
       password_hash,
       status: 1,
     });
@@ -125,10 +136,11 @@ export class AuthService {
     record.status = 0;
     await this.refreshTokenRepository.save(record);
 
-    const user = { user_id: payload.sub, tenant_id: payload.tenantId };
+    const dbUser = await this.users.findbyid(payload.sub);
+    if (!dbUser) throw new UnauthorizedException('user not found');
 
-    const accessToken = this.signAccess(user);
-    const newRefreshToken = await this.signRefresh(user);
+    const accessToken = this.signAccess(dbUser);
+    const newRefreshToken = await this.signRefresh(dbUser);
 
     return { accessToken, refreshToken: newRefreshToken };
   }

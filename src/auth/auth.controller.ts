@@ -5,10 +5,17 @@ import {
   Post,
   Headers,
   BadRequestException,
+  Get,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type { Request } from 'express';
+import { Roles } from './decorators/roles.decorator';
+import { RolesGuard } from './guards/roles.guard';
 
 @Controller('v1/auth')
 export class AuthController {
@@ -49,5 +56,12 @@ export class AuthController {
     }
 
     return this.authService.refreshToken(body.refreshToken);
+  }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('customer')
+  @Get()
+  hello(@Req() req: Request) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return req.user;
   }
 }
