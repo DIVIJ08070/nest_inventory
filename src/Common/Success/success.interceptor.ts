@@ -13,14 +13,14 @@ export class SuccessInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse<Response>();
 
     return next.handle().pipe(
-      map((data: unknown) => {
+      map((data: object) => {
         if (
           typeof data === 'object' &&
           data !== null &&
           'message' in data &&
           'data' in data
         ) {
-          const typed = data as { message: string; data: unknown };
+          const typed = data as { message: string; data: object };
 
           return {
             success: true,
