@@ -23,6 +23,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 type AuthedReq = Request & {
   user: {
@@ -32,6 +33,7 @@ type AuthedReq = Request & {
   };
 };
 
+@ApiBearerAuth()
 @Controller('products')
 export class ProductsController {
   constructor(private readonly products: ProductsService) {}

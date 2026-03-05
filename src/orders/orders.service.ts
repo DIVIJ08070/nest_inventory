@@ -5,22 +5,39 @@ import { AuthedUser } from 'src/Common/types/authed-user';
 import { Product } from 'src/products/entities/product.entity';
 import { InventoryMovement } from './entities/inventory-movement.entity';
 import { OrderItem } from './entities/order-item.entity';
+
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
+
+type OrderConfirmationJob = {
+  email: string;
+  orderId: number;
+};
 
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly dataSource: DataSource,
+
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
+
     @InjectRepository(Order)
     private readonly orderRepo: Repository<Order>,
+
     @InjectRepository(OrderItem)
     private readonly orderItemRepo: Repository<OrderItem>,
+
     @InjectRepository(InventoryMovement)
     private readonly inventoryRepo: Repository<InventoryMovement>,
+
+    @InjectQueue('notifications')
+    private readonly notificationQueue: Queue<OrderConfirmationJob>,
   ) {}
+
   async createOrder(user: AuthedUser, dto: CreateOrderDto) {
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -96,6 +113,13 @@ export class OrdersService {
       await queryRunner.manager.save(order);
 
       await queryRunner.commitTransaction();
+
+      console.log('Order committed, pushing job to queue');
+
+      await this.notificationQueue.add('order-confirmation', {
+        email: 'test@test.com',
+        orderId: order.order_id,
+      });
 
       return order;
     } catch (err) {

@@ -18,9 +18,25 @@ import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
 import { InventoryMovement } from './orders/entities/inventory-movement.entity';
 import { BullModule } from '@nestjs/bullmq';
+import { QueueModule } from './queue/queue.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ReportsModule } from './reports/reports.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
+    ReportsModule,
+    ScheduleModule.forRoot(),
+    QueueModule,
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 5,
+      },
+    ]),
     BullModule.forRoot({
       connection: {
         host: 'localhost',
@@ -49,6 +65,7 @@ import { BullModule } from '@nestjs/bullmq';
         Order,
         OrderItem,
         InventoryMovement,
+        Category,
       ],
       synchronize: false,
     }),
@@ -56,8 +73,15 @@ import { BullModule } from '@nestjs/bullmq';
     UserModule,
     ProductsModule,
     OrdersModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

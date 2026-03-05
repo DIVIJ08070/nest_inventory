@@ -6,9 +6,13 @@ import { OrderItem } from './entities/order-item.entity';
 import { Product } from 'src/products/entities/product.entity';
 import { InventoryMovement } from './entities/inventory-movement.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    BullModule.registerQueue({
+      name: 'notifications',
+    }),
     TypeOrmModule.forFeature([Order, OrderItem, Product, InventoryMovement]),
   ],
   controllers: [OrdersController],
