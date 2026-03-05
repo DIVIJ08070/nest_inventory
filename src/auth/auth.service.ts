@@ -136,7 +136,7 @@ export class AuthService {
     record.status = 0;
     await this.refreshTokenRepository.save(record);
 
-    const dbUser = await this.users.findbyid(payload.sub);
+    const dbUser = await this.users.findbyid(payload.tenantId, payload.sub);
     if (!dbUser) throw new UnauthorizedException('user not found');
 
     const accessToken = this.signAccess(dbUser);
@@ -147,7 +147,7 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     let payload: { sub: number; tenantId: number };
-
+    console.log(refreshToken);
     try {
       payload = this.jwt.verify(refreshToken, {
         secret: process.env.jwt_refresh_secret,

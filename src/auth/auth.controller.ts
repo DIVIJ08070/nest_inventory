@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Body,
   Controller,
@@ -9,7 +8,6 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -35,7 +33,6 @@ export class AuthController {
       dto.username,
     );
   }
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   login(
     @Headers() header: Record<string, string | string[] | undefined>,

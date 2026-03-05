@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -17,9 +17,40 @@ export class UserService {
   createUser(data: Partial<User>) {
     return this.userRepositery.save(this.userRepositery.create(data));
   }
-  findbyid(id: number) {
-    return this.userRepositery.query('select * from users where user_id = ?', [
-      id,
-    ]);
+  async findbyid(tenantId: number, userId: number) {
+    return this.userRepositery.findOne({
+      where: {
+        tenant_id: tenantId,
+        user_id: userId,
+      },
+    });
+  }
+  async makeVendor(userId: number, tenantId: number) {
+    const user = await this.userRepositery.findOne({
+      where: {
+        user_id: userId,
+        tenant_id: tenantId,
+      },
+    });
+
+    if (!user) throw new NotFoundException('user not found');
+
+    user.role = 'vendor';
+
+    return this.userRepositery.save(user);
+  }
+  async makeAdmin(userId: number, tenantId: number) {
+    const user = await this.userRepositery.findOne({
+      where: {
+        user_id: userId,
+        tenant_id: tenantId,
+      },
+    });
+
+    if (!user) throw new NotFoundException('user not found');
+
+    user.role = 'admin';
+
+    return this.userRepositery.save(user);
   }
 }
