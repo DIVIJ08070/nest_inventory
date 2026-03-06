@@ -24,6 +24,9 @@ import { ReportsModule } from './reports/reports.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CategoriesModule } from './categories/categories.module';
+import { CartsModule } from './carts/carts.module';
+import { Cart } from './carts/entities/cart.entity';
+import { CartItem } from './carts/entities/cart.item';
 
 @Module({
   imports: [
@@ -66,6 +69,8 @@ import { CategoriesModule } from './categories/categories.module';
         OrderItem,
         InventoryMovement,
         Category,
+        Cart,
+        CartItem,
       ],
       synchronize: false,
     }),
@@ -74,6 +79,7 @@ import { CategoriesModule } from './categories/categories.module';
     ProductsModule,
     OrdersModule,
     CategoriesModule,
+    CartsModule,
   ],
   controllers: [AppController],
   providers: [
