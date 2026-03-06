@@ -17,6 +17,7 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -66,6 +67,7 @@ export class AuthController {
     status: 200,
     description: 'Returns accessToken and refreshToken',
   })
+  @Throttle({ default: { limit: 3, ttl: 6000 } })
   @Post('login')
   login(
     @Headers() header: Record<string, string | string[] | undefined>,
@@ -95,5 +97,9 @@ export class AuthController {
     }
 
     return this.authService.refreshToken(body.refreshToken);
+  }
+  @Post('logout')
+  logout(@Body() body: { refreshToken: string }) {
+    return this.authService.logout(body.refreshToken);
   }
 }

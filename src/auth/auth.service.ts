@@ -12,6 +12,12 @@ import { IsNull, Repository } from 'typeorm';
 import { UserService } from 'src/user/user.service';
 import { RefreshToken } from './refresh-token.entity';
 
+export type JwtPayload = {
+  sub: number;
+  tenantId: number;
+  role?: string;
+};
+
 type DbUser = {
   user_id: number;
   tenant_id: number;
@@ -51,7 +57,7 @@ export class AuthService {
     const secret = process.env.jwt_refresh_secret;
     if (!secret) throw new Error('missing jwt_refresh_secret');
 
-    const expiresIn = (process.env.jwt_refresh_expires ?? '7d') as StringValue;
+    const expiresIn = process.env.jwt_refresh_expires as StringValue;
 
     const refreshToken = this.jwt.sign(
       { sub: user.user_id, tenantId: user.tenant_id },
@@ -157,5 +163,32 @@ export class AuthService {
     }
 
     return this.refresh(payload, refreshToken);
+  }
+
+  async logout(refreshToken: string) {
+    const payload = this.jwt.verify<JwtPayload>(refreshToken, {
+      secret: process.env.jwt_refresh_secret,
+    });
+    const record = await this.refreshTokenRepository.findOne({
+      where: {
+        user_id: payload.sub,
+        tenant_id: payload.tenantId,
+        status: 1,
+
+        revoked_at: IsNull(),
+      },
+      order: { refresh_token_id: 'DESC' },
+    });
+
+    if (!record) {
+      throw new UnauthorizedException('invalid token');
+    }
+
+    record.status = 0;
+    record.revoked_at = new Date();
+
+    await this.refreshTokenRepository.save(record);
+
+    return { message: 'logged out successfully' };
   }
 }
