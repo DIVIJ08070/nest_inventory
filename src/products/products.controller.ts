@@ -23,7 +23,14 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 type AuthedReq = Request & {
   user: {
@@ -40,6 +47,11 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
+  @ApiOperation({ summary: 'Search products' })
+  @ApiQuery({ name: 'category', required: false, type: Number })
+  @ApiQuery({ name: 'minPrice', required: false, type: Number })
+  @ApiQuery({ name: 'maxPrice', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
   findAll(
     @Req() req: AuthedReq,
     @Query('category') category?: string,
@@ -89,6 +101,24 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'vendor')
   @Post(':id/images')
+  @ApiOperation({ summary: 'Upload product image' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          format: 'binary',
+        },
+        primary: {
+          type: 'boolean',
+          example: true,
+        },
+      },
+    },
+  })
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
@@ -110,7 +140,7 @@ export class ProductsController {
     @Req() req: AuthedReq,
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: Express.Multer.File,
-    @Query('primary') primary?: string, // optional ?primary=true
+    @Query('primary') primary?: string,
   ) {
     const isPrimary = primary === 'true' ? 1 : 0;
     const url = `/uploads/products/${file.filename}`;

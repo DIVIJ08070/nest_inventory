@@ -21,6 +21,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 import type { Request } from 'express';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 type AuthedReq = Request & {
   user: {
@@ -30,6 +31,7 @@ type AuthedReq = Request & {
   };
 };
 
+@ApiBearerAuth()
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categories: CategoriesService) {}

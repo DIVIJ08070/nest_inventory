@@ -162,6 +162,6 @@ export class ProductsService {
   private async bumpTenantCacheVersion(tenantId: number): Promise<void> {
     const key = `products:ver:t${tenantId}`;
     const current = (await this.cache.get<number>(key)) ?? 1;
-    await this.cache.set(key, current + 1, 24 * 60 * 60 * 1000); // keep version for 1 day
+    await this.cache.set(key, current + 1, 24 * 60 * 60 * 1000);
   }
 }

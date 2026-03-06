@@ -129,4 +129,40 @@ export class OrdersService {
       await queryRunner.release();
     }
   }
+  async findMyOrders(user: AuthedUser) {
+    return this.orderRepo.find({
+      where: {
+        tenant_id: user.tenant_id,
+        customer_id: user.user_id,
+      },
+      order: { order_id: 'DESC' },
+    });
+  }
+  async getOrder(user: AuthedUser, orderId: number) {
+    return this.orderRepo.findOne({
+      where: {
+        order_id: orderId,
+        tenant_id: user.tenant_id,
+      },
+    });
+  }
+  async getAllOrders(user: AuthedUser) {
+    return this.orderRepo.find({
+      where: { tenant_id: user.tenant_id },
+      order: { order_id: 'DESC' },
+    });
+  }
+  async updateStatus(orderId: number, status: string) {
+    const order = await this.orderRepo.findOne({
+      where: { order_id: orderId },
+    });
+
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    order.order_status = status;
+
+    return this.orderRepo.save(order);
+  }
 }

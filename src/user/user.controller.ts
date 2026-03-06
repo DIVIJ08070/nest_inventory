@@ -12,6 +12,7 @@ import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 type AuthedReq = Request & {
   user: {
@@ -21,6 +22,7 @@ type AuthedReq = Request & {
   };
 };
 
+@ApiBearerAuth()
 @Controller('users')
 export class UsersController {
   constructor(private readonly users: UserService) {}

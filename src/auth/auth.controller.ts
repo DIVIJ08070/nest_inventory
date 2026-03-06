@@ -5,13 +5,22 @@ import {
   Headers,
   BadRequestException,
 } from '@nestjs/common';
+
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiHeader,
+  ApiResponse,
+} from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  auth: any;
   constructor(private readonly authService: AuthService) {}
 
   private gettenantid(header: Record<string, string | string[] | undefined>) {
@@ -20,12 +29,24 @@ export class AuthController {
     return tenant_id;
   }
 
+  @ApiOperation({ summary: 'Register new user' })
+  @ApiHeader({
+    name: 'x-tenant-id',
+    required: true,
+    description: 'Tenant ID of the organization',
+  })
+  @ApiBody({ type: RegisterDto })
+  @ApiResponse({
+    status: 201,
+    description: 'User registered successfully',
+  })
   @Post('register')
   register(
     @Headers() header: Record<string, string | string[] | undefined>,
     @Body() dto: RegisterDto,
   ) {
     const tenantId = this.gettenantid(header);
+
     return this.authService.register(
       tenantId,
       dto.email,
@@ -33,14 +54,40 @@ export class AuthController {
       dto.username,
     );
   }
+
+  @ApiOperation({ summary: 'User login' })
+  @ApiHeader({
+    name: 'x-tenant-id',
+    required: true,
+    description: 'Tenant ID of the organization',
+  })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns accessToken and refreshToken',
+  })
   @Post('login')
   login(
     @Headers() header: Record<string, string | string[] | undefined>,
     @Body() dto: LoginDto,
   ) {
     const tenantId = this.gettenantid(header);
+
     return this.authService.login(tenantId, dto.email, dto.password);
   }
+
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiBody({
+    schema: {
+      example: {
+        refreshToken: 'your_refresh_token_here',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns new accessToken and refreshToken',
+  })
   @Post('refresh')
   refresh(@Body() body: { refreshToken: string }) {
     if (!body.refreshToken) {
